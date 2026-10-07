@@ -24,25 +24,35 @@
         return `${webRoot}${path}`;
     };
 
+    // Translate via Nextcloud's l10n (strings are registered in l10n/<lang>.js).
+    // Falls back to the English source text with {placeholder} substitution.
+    const tr = (text, vars = {}) => {
+        if (typeof window.t === 'function') {
+            return window.t(APP_ID, text, vars);
+        }
+
+        return text.replace(/\{(\w+)\}/g, (match, key) => (key in vars ? String(vars[key]) : match));
+    };
+
     const actions = [
         {
             id: 'kommen',
-            label: 'Kommen',
+            label: () => tr('Clock in'),
             icon: 'kommen.svg',
         },
         {
             id: 'pausenanfang',
-            label: 'In Pause gehen',
+            label: () => tr('Start break'),
             icon: 'pausenanfang.svg',
         },
         {
             id: 'pausenende',
-            label: 'Aus der Pause kommen',
+            label: () => tr('End break'),
             icon: 'pausenende.svg',
         },
         {
             id: 'gehen',
-            label: 'Gehen',
+            label: () => tr('Clock out'),
             icon: 'gehen.svg',
         },
     ];
@@ -107,7 +117,7 @@
         }
 
         if (!response.ok) {
-            const message = data.error || 'WorkTimePunch konnte die Aktion nicht ausfuehren.';
+            const message = data.error || tr('WorkTimePunch could not complete the action.');
             const error = new Error(`HTTP ${response.status}: ${message}`);
             error.data = data;
             error.status = response.status;
@@ -178,12 +188,12 @@
 
     const stateLabel = (state) => {
         if (state === 'working') {
-            return 'im Betrieb';
+            return tr('clocked in');
         }
         if (state === 'paused') {
-            return 'in Pause';
+            return tr('on break');
         }
-        return 'nicht im Betrieb';
+        return tr('clocked out');
     };
 
     const render = (state) => {
@@ -202,11 +212,12 @@
 
         const lastPunch = lastPunchFromState(state);
         actions.forEach((action) => {
+            const label = action.label();
             const button = document.createElement('button');
             button.type = 'button';
             button.className = 'worktimepunch-topbar-button';
-            button.title = action.label;
-            button.setAttribute('aria-label', action.label);
+            button.title = label;
+            button.setAttribute('aria-label', label);
             button.dataset.worktimepunchAction = action.id;
 
             const enabled = Boolean(state.buttons?.[action.id]?.enabled) && pendingAction === null;
@@ -216,8 +227,8 @@
             const lastPunchTime = lastPunch?.action === action.id ? lastPunch.time : null;
             if (lastPunchTime) {
                 button.classList.add('worktimepunch-topbar-button--with-time');
-                button.setAttribute('aria-label', `${action.label}, letzter Klick ${lastPunchTime}`);
-                button.title = `${action.label}: ${lastPunchTime}`;
+                button.setAttribute('aria-label', tr('{label}, last punch {time}', { label, time: lastPunchTime }));
+                button.title = `${label}: ${lastPunchTime}`;
             }
 
             const img = document.createElement('img');

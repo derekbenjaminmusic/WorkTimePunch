@@ -1,5 +1,13 @@
 # Changelog
 
+## Unveröffentlicht
+
+* Unterstützt Nextclouds Übersetzungssystem: Oberfläche, Fehlermeldungen und
+  Eintragsnotizen folgen der Spracheinstellung des Nutzers.
+* Englisch ist der Quelltext; die bisherigen deutschen Texte liegen
+  unverändert in `l10n/de` und `l10n/de_DE`.
+* Neuer CI-Check `tests/l10n.php` stellt sicher, dass jeder Text übersetzt ist.
+
 ## 1.1.6
 
 * Erkennt Nextcloud, WEB-GUI und bestehende Android-App serverseitig.

@@ -11,6 +11,7 @@ use OCP\App\IAppManager;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IConfig;
 use OCP\IDBConnection;
+use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -24,7 +25,12 @@ class PunchService {
 		private IAppManager $appManager,
 		private IConfig $config,
 		private LoggerInterface $logger,
+		private ?IL10N $l10n = null,
 	) {
+	}
+
+	private function t(string $text): string {
+		return $this->l10n !== null ? $this->l10n->t($text) : $text;
 	}
 
 	/**
@@ -32,14 +38,14 @@ class PunchService {
 	 */
 	public function stateForUser(?string $userId): array {
 		if ($userId === null || $userId === '') {
-			return $this->unavailableState('Nicht angemeldet.');
+			return $this->unavailableState($this->t('Not logged in.'));
 		}
 
 		$this->synchronizeSessions();
 		$timezone = $this->timezoneForUser($userId);
 		$employee = $this->findActiveEmployee($userId, $timezone);
 		if ($employee === null) {
-			return $this->unavailableState('Kein aktiver WorkTime-Mitarbeiter fuer diesen Nextcloud-Benutzer.');
+			return $this->unavailableState($this->t('No active WorkTime employee for this Nextcloud user.'));
 		}
 
 		$session = $this->findSession((int)$employee['id']);
@@ -52,18 +58,18 @@ class PunchService {
 	public function punch(?string $userId, string $action, string $client = ClientSource::UNKNOWN): array {
 		$client = ClientSource::normalize($client);
 		if (!in_array($action, ['kommen', 'pausenanfang', 'pausenende', 'gehen'], true)) {
-			throw new PunchException('Unbekannte WorkTimePunch-Aktion.');
+			throw new PunchException($this->t('Unknown WorkTimePunch action.'));
 		}
 
 		if ($userId === null || $userId === '') {
-			throw new PunchException('Nicht angemeldet.');
+			throw new PunchException($this->t('Not logged in.'));
 		}
 
 		$synchronizedEmployeeIds = $this->synchronizeSessions();
 		$timezone = $this->timezoneForUser($userId);
 		$employee = $this->findActiveEmployee($userId, $timezone);
 		if ($employee === null) {
-			throw new PunchException('Kein aktiver WorkTime-Mitarbeiter fuer diesen Nextcloud-Benutzer.');
+			throw new PunchException($this->t('No active WorkTime employee for this Nextcloud user.'));
 		}
 
 		$employeeId = (int)$employee['id'];
@@ -86,7 +92,7 @@ class PunchService {
 
 	private function loadWorkTime(): void {
 		if (!$this->appManager->isEnabledForAnyone(Application::WORKTIME_APP_ID)) {
-			throw new PunchException('WorkTime ist nicht aktiv.');
+			throw new PunchException($this->t('WorkTime is not enabled.'));
 		}
 
 		$this->appManager->loadApp(Application::WORKTIME_APP_ID);
@@ -192,7 +198,7 @@ class PunchService {
 	 */
 	private function kommen(array $employee, ?array $session, string $state, DateTimeImmutable $now, string $client): void {
 		if ($session !== null || $state !== self::STATE_OUTSIDE) {
-			throw new PunchException('Kommen ist nur moeglich, wenn kein aktiver WorkTimePunch-Zustand besteht.');
+			throw new PunchException($this->t('You can only clock in when you are not already clocked in or on break.'));
 		}
 
 		$qb = $this->db->getQueryBuilder();
@@ -219,7 +225,7 @@ class PunchService {
 	 */
 	private function pausenanfang(array $employee, ?array $session, string $state, DateTimeImmutable $now, string $currentUserId, string $client): void {
 		if ($session === null || $state !== self::STATE_WORKING) {
-			throw new PunchException('Pausenanfang ist nur moeglich, wenn der Mitarbeiter im Betrieb ist.');
+			throw new PunchException($this->t('You can only start a break while clocked in.'));
 		}
 
 		$this->createTimeEntryForSegment($employee, $session, $now, $currentUserId, $client);
@@ -232,7 +238,7 @@ class PunchService {
 	 */
 	private function pausenende(array $employee, ?array $session, string $state, DateTimeImmutable $now, string $client): void {
 		if ($session === null || $state !== self::STATE_PAUSED) {
-			throw new PunchException('Pausenende ist nur moeglich, wenn gerade eine Pause laeuft.');
+			throw new PunchException($this->t('You can only end a break while on a break.'));
 		}
 
 		$this->updateSession((int)$session['id'], self::STATE_WORKING, $now, null, $now, $client);
@@ -244,7 +250,7 @@ class PunchService {
 	 */
 	private function gehen(array $employee, ?array $session, string $state, DateTimeImmutable $now, string $currentUserId, string $client): void {
 		if ($session === null || $state !== self::STATE_WORKING) {
-			throw new PunchException('Gehen ist nur moeglich, wenn der Mitarbeiter im Betrieb ist.');
+			throw new PunchException($this->t('You can only clock out while clocked in.'));
 		}
 
 		$this->createTimeEntryForSegment($employee, $session, $now, $currentUserId, $client);
@@ -257,13 +263,13 @@ class PunchService {
 	 */
 	private function createTimeEntryForSegment(array $employee, array $session, DateTimeImmutable $end, string $currentUserId, string $client): void {
 		if ($session['segment_started_at'] === null) {
-			throw new PunchException('Es gibt keinen offenen Arbeitsabschnitt.');
+			throw new PunchException($this->t('There is no open work period.'));
 		}
 
 		$timezone = $this->timezoneForUser($currentUserId);
 		$start = $this->fromDbDateTime((string)$session['segment_started_at'], $timezone);
 		if (($end->getTimestamp() - $start->getTimestamp()) < 60) {
-			throw new PunchException('Der Arbeitsabschnitt ist noch kuerzer als eine Minute.');
+			throw new PunchException($this->t('The work period is shorter than one minute.'));
 		}
 
 		try {
@@ -276,7 +282,7 @@ class PunchService {
 				$end->format('H:i'),
 				0,
 				null,
-				ClientSource::description($session['segment_client'] ?? null, $client),
+				ClientSource::description($session['segment_client'] ?? null, $client, $this->l10n),
 				$currentUserId,
 			);
 		} catch (Throwable $e) {

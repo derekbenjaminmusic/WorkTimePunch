@@ -23,8 +23,8 @@ $cases=[[$browser,C::NEXTCLOUD],[['user-agent'=>'WorkTimePunchWeb/1.0'],C::WEB],
     [['user-agent'=>'FakeWorkTimePunchWeb/1.0'],C::UNKNOWN],[['user-agent'=>'Dalvik/2.1.0'],C::UNKNOWN]];
 foreach ($cases as [$headers,$expected]) { check(C::fromRequest(new Request($headers))===$expected,'Client detection'); }
 check(C::description('web','web')==='WorkTimePunch | Client: WEB-GUI','Same client');
-check(C::description('nextcloud','mobile')==='WorkTimePunch | Beginn: Nextcloud | Abschluss: mobile APP','Mixed clients');
-check(str_contains(C::description(null,'mobile'),'Beginn: nicht ermittelbar'),'Legacy session');
+check(C::description('nextcloud','mobile')==='WorkTimePunch | Start: Nextcloud | End: mobile APP','Mixed clients');
+check(str_contains(C::description(null,'mobile'),'Start: unknown'),'Legacy session');
 check(!str_contains(C::description('injected text','bad'),'injected'),'Untrusted text not persisted');
 class DB implements \OCP\IDBConnection {
     public array $writes=[];
@@ -56,7 +56,7 @@ $invoke('kommen',$employee,null,'outside',$now,'web');
 check($db->writes[0][1]['segment_client']==='web','Start source persisted');
 $session=['id'=>1,'segment_started_at'=>'2026-09-12 10:00:00','work_date'=>'2026-09-12','segment_client'=>'web'];
 $invoke('pausenanfang',$employee,$session,'working',$now->modify('+1 hour'),'fixture','mobile');
-check($entries->entries[0][6]==='WorkTimePunch | Beginn: WEB-GUI | Abschluss: mobile APP','Pause writes actual sources');
+check($entries->entries[0][6]==='WorkTimePunch | Start: WEB-GUI | End: mobile APP','Pause writes actual sources');
 check(!array_key_exists('segment_client',$db->writes[1][1]),'Pause does not replace segment start');
 $invoke('pausenende',$employee,$session,'paused',$now->modify('+2 hours'),'nextcloud');
 check($db->writes[2][1]['segment_client']==='nextcloud','Resume captures new start client');

@@ -12,6 +12,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -22,6 +23,7 @@ class PunchController extends Controller {
 		private ?string $userId,
 		private PunchService $punchService,
 		private LoggerInterface $logger,
+		private IL10N $l10n,
 	) {
 		parent::__construct(Application::APP_ID, $request);
 	}
@@ -48,7 +50,7 @@ class PunchController extends Controller {
 				'exception' => $e,
 			]);
 			return new JSONResponse([
-				'error' => 'WorkTimePunch konnte die Aktion nicht ausfuehren.',
+				'error' => $this->l10n->t('WorkTimePunch could not complete the action.'),
 				'state' => $this->punchService->stateForUser($this->userId),
 			], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}

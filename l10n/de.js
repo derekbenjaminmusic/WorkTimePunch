@@ -1,0 +1,30 @@
+OC.L10N.register(
+    "worktimepunch",
+    {
+        "Clock in": "Kommen",
+        "Start break": "In Pause gehen",
+        "End break": "Aus der Pause kommen",
+        "Clock out": "Gehen",
+        "clocked in": "im Betrieb",
+        "on break": "in Pause",
+        "clocked out": "nicht im Betrieb",
+        "{label}, last punch {time}": "{label}, letzter Klick {time}",
+        "WorkTimePunch could not complete the action.": "WorkTimePunch konnte die Aktion nicht ausfuehren.",
+        "Unknown WorkTimePunch action.": "Unbekannte WorkTimePunch-Aktion.",
+        "Not logged in.": "Nicht angemeldet.",
+        "No active WorkTime employee for this Nextcloud user.": "Kein aktiver WorkTime-Mitarbeiter fuer diesen Nextcloud-Benutzer.",
+        "WorkTime is not enabled.": "WorkTime ist nicht aktiv.",
+        "You can only clock in when you are not already clocked in or on break.": "Kommen ist nur moeglich, wenn kein aktiver WorkTimePunch-Zustand besteht.",
+        "You can only start a break while clocked in.": "Pausenanfang ist nur moeglich, wenn der Mitarbeiter im Betrieb ist.",
+        "You can only end a break while on a break.": "Pausenende ist nur moeglich, wenn gerade eine Pause laeuft.",
+        "You can only clock out while clocked in.": "Gehen ist nur moeglich, wenn der Mitarbeiter im Betrieb ist.",
+        "There is no open work period.": "Es gibt keinen offenen Arbeitsabschnitt.",
+        "The work period is shorter than one minute.": "Der Arbeitsabschnitt ist noch kuerzer als eine Minute.",
+        "unknown": "nicht ermittelbar",
+        "Client: %s": "Client: %s",
+        "Start: %1$s | End: %2$s": "Beginn: %1$s | Abschluss: %2$s",
+        "WorkTime is enabled. The buttons in the Nextcloud top bar are loaded for logged-in users.": "WorkTime ist aktiv. Die Schaltflaechen in der oberen Nextcloud-Leiste werden fuer angemeldete Nutzer geladen.",
+        "WorkTime is not enabled. WorkTimePunch will disable itself.": "WorkTime ist nicht aktiv. WorkTimePunch deaktiviert sich selbst."
+    },
+    "nplurals=2; plural=(n != 1);"
+);

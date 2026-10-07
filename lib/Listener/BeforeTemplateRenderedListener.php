@@ -27,6 +27,7 @@ class BeforeTemplateRenderedListener implements IEventListener {
 			return;
 		}
 
+		Util::addTranslations(Application::APP_ID);
 		Util::addStyle(Application::APP_ID, 'topbar');
 		Util::addScript(Application::APP_ID, 'topbar');
 	}

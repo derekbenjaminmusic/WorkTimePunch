@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\WorkTimePunch\Service;
 
+use OCP\IL10N;
 use OCP\IRequest;
 
 /** Request provenance only; never an authentication or authorization decision. */
@@ -35,21 +36,26 @@ final class ClientSource {
 		return in_array($source, [self::NEXTCLOUD, self::WEB, self::MOBILE], true) ? $source : self::UNKNOWN;
 	}
 
-	public static function label(string $source): string {
+	public static function label(string $source, ?IL10N $l10n = null): string {
 		return match (self::normalize($source)) {
 			self::NEXTCLOUD => 'Nextcloud',
 			self::WEB => 'WEB-GUI',
 			self::MOBILE => 'mobile APP',
-			default => 'nicht ermittelbar',
+			default => self::translate($l10n, 'unknown'),
 		};
 	}
 
-	public static function description(?string $startedWith, string $completedWith): string {
+	public static function description(?string $startedWith, string $completedWith, ?IL10N $l10n = null): string {
 		$start = self::normalize($startedWith ?? self::UNKNOWN);
 		$end = self::normalize($completedWith);
 		if ($start === $end) {
-			return 'WorkTimePunch | Client: ' . self::label($end);
+			return 'WorkTimePunch | ' . self::translate($l10n, 'Client: %s', [self::label($end, $l10n)]);
 		}
-		return 'WorkTimePunch | Beginn: ' . self::label($start) . ' | Abschluss: ' . self::label($end);
+		return 'WorkTimePunch | ' . self::translate($l10n, 'Start: %1$s | End: %2$s', [self::label($start, $l10n), self::label($end, $l10n)]);
+	}
+
+	/** @param list<string> $parameters */
+	private static function translate(?IL10N $l10n, string $text, array $parameters = []): string {
+		return $l10n !== null ? $l10n->t($text, $parameters) : vsprintf($text, $parameters);
 	}
 }
